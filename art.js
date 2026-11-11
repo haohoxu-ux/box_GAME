@@ -1,5 +1,82 @@
 "use strict";
 
+// Paint the reef once and reuse it behind every level and around the page.
+function paintReef() {
+  const reef = document.createElement("canvas");
+  reef.width = 352;
+  reef.height = 256;
+  const ctx = reef.getContext("2d");
+  const water = ctx.createLinearGradient(0, 0, 0, reef.height);
+  water.addColorStop(0, "#65d8d2");
+  water.addColorStop(0.34, "#268fac");
+  water.addColorStop(0.78, "#165777");
+  water.addColorStop(1, "#123952");
+  ctx.fillStyle = water;
+  ctx.fillRect(0, 0, reef.width, reef.height);
+
+  function pixel(x, y, w, h, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+  }
+  // Stepped beams preserve the pixel edges of the board artwork.
+  for (const [start, width] of [[24, 13], [52, 4], [146, 28], [252, 11], [278, 4], [346, 20]]) {
+    for (let y = 0; y < 160; y += 2) {
+      ctx.globalAlpha = 0.16 * (1 - y / 160);
+      pixel(start - Math.floor(y / 3), y, width + Math.floor(y / 12), 2, "#dcfff0");
+    }
+  }
+  ctx.globalAlpha = 1;
+  for (let x = 0; x < reef.width; x += 3) {
+    const ridge = Math.round(187 + 9 * Math.sin(x / 19) + 7 * Math.sin(x / 8));
+    pixel(x, ridge, 3, reef.height - ridge, "#28657b");
+    const sand = Math.round(232 + 5 * Math.sin(x / 34));
+    pixel(x, sand, 3, reef.height - sand, "#639fa3");
+    pixel(x, sand, 3, 2, "#8fbeb4");
+    pixel(x, sand + 9 + (x % 7), 2, 1, "#97c4b8");
+  }
+
+  function sprite(rows, palette, x, y, scale = 1, mirror = false) {
+    rows.forEach((row, j) => [...row].forEach((ch, i) => {
+      if (palette[ch]) pixel(x + (mirror ? row.length - 1 - i : i) * scale,
+        y + j * scale, scale, scale, palette[ch]);
+    }));
+  }
+  const coral = [
+    "       h     ", "   h   hh    ", "   hc   c  h ", " h cc  hc  hc",
+    " cc cc cc  cc", "  cc c cc cc ", "   ccc cccc  ", "     cccc    ",
+    " h    cc     ", " hc  ccc     ", "  cccccc     ", "     cdc     ",
+    "     cdd     ", "    cddd     "
+  ];
+  const kelp = [
+    "    l   ", "   ll   ", "   ld  l", " l dd ll", " ll d ld",
+    " dl d ld", "  dldld ", "   ddd  ", " l dd   ", " ld d   ",
+    "  ddd   ", "   dd   ", "   dd   "
+  ];
+  const fronds = {l:"#55c6a8", d:"#237e79"};
+  const branches = {h:"#ffc89c", c:"#e98b78", d:"#a95767"};
+  sprite(kelp, fronds, 1, 189, 3);
+  sprite(coral, branches, 8, 198, 3);
+  sprite(kelp, fronds, 321, 178, 4, true);
+  sprite(coral, branches, 308, 215, 2, true);
+  sprite(kelp, fronds, 66, 222, 2);
+
+  const fish = ["    fff   ", "f  aaaff  ", "ffaaaeaff ", "f  aaaaf  ", "    ff    "];
+  const scales = {f:"#de865b", a:"#ffd18d", e:"#244959"};
+  for (const [x, y, flip] of [[13, 40, false], [28, 32, false], [39, 42, false],
+    [322, 59, true], [335, 67, true]]) sprite(fish, scales, x, y, 1, flip);
+  for (const [x, y, r] of [[18, 170, 3], [24, 153, 2], [19, 143, 1],
+    [334, 158, 3], [327, 141, 2], [331, 129, 1], [85, 22, 2], [89, 15, 1]]) {
+    pixel(x, y - r, r, 1, "#c6eee1");
+    pixel(x - 1, y - r + 1, 1, r, "#c6eee1");
+    pixel(x, y + 1, r, 1, "#75bfbf");
+    pixel(x + r, y - r + 1, 1, r, "#75bfbf");
+  }
+  return reef;
+}
+
+const reefBackdrop = paintReef();
+document.documentElement.style.setProperty("--reef", 'url("' + reefBackdrop.toDataURL() + '")');
+
 // Draw at a fixed low resolution so the tile artwork keeps its pixel edges.
 function drawBoard(canvas, state, facing) {
   const ctx = canvas.getContext("2d");
@@ -10,18 +87,7 @@ function drawBoard(canvas, state, facing) {
     for (let i=0;i<=n;i++) rect(Math.round(x1+(x2-x1)*i/n),Math.round(y1+(y2-y1)*i/n),size,size,color);
   }
   const rand = (x,y) => ((Math.imul(x+23,73856093)^Math.imul(y+17,19349663))>>>0);
-  function plant(x,y,flower) {
-    rect(x+1,y+6,8,2,"#82915c");
-    rect(x+4,y+1,2,6,"#57794f");rect(x+1,y+3,3,2,"#658850");
-    rect(x+6,y+2,3,2,"#68894c");rect(x+5,y,2,2,"#bbcc7c");
-    if(flower){rect(x+2,y-2,5,3,"#f4dc9b");rect(x+4,y-3,2,5,"#fff0bd");rect(x+4,y-1,2,2,"#c98e55");}
-  }
-  rect(0,0,canvas.width,canvas.height,"#a1b77e");
-  for(let y=0;y<canvas.height;y+=9) for(let x=0;x<canvas.width;x+=10){
-    const v=rand(x,y), px=x+v%7, py=y+(v>>>6)%6;
-    rect(px,py,3,1,v%3===0?"#bac88b":"#90a970");
-    if(v%9===0) plant(px,py,v%4===0);
-  }
+  ctx.drawImage(reefBackdrop, 0, 0);
   function wall(x,y,seed) {
     rect(x,y,32,32,"#465b49");rect(x+1,y+1,30,22,"#a6ae91");
     rect(x+2,y+2,28,2,"#c7cbb0");rect(x+2,y+5,27,2,"#b5bda0");
@@ -54,7 +120,7 @@ function drawBoard(canvas, state, facing) {
     sprite.forEach((row,j)=>[...row].forEach((c,i)=>{if(palette[c])rect(x+2+(facing==="left"?13-i:i)*2,y-2+j*2,2,2,palette[c]);}));
   }
   for(let j=0;j<state.rows.length;j++)for(let i=0;i<state.width;i++){
-    if(state.rows[j][i]!=="-")rect(ox+i*tile+3,oy+j*tile+5,tile,tile,"#819768");
+    if(state.rows[j][i]!=="-")rect(ox+i*tile+3,oy+j*tile+5,tile,tile,"#164b61");
   }
   state.rows.forEach((row,j)=>[...row].forEach((c,i)=>{
     const x=ox+i*tile,y=oy+j*tile,pos=j*state.width+i,seed=rand(i,j);
