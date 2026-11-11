@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#eeeedd">
+  <title>箱庭仓库 · 推箱子</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="game.js"></script>
+  <script defer src="art.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header><div class="brand"><i class="brand-icon" aria-hidden="true">✥</i><span>箱庭仓库</span></div>
+    <label class="choose">选择关卡 <select id="level" aria-label="选择关卡"></select></label>
+  </header>
+  <main>
+    <div class="left">
+      <div class="intro"><span class="tag">推箱子</span><h1 id="title">初入仓库</h1></div>
+      <section class="board-frame" aria-label="游戏区域">
+        <div class="board-bar"><span><i></i> <b id="board-label">仓库 01</b></span><span class="holes" aria-hidden="true">● ● ●</span></div>
+        <div class="board-view"><canvas id="board" width="352" height="256" tabindex="0" aria-label="推箱子棋盘，使用方向键或 WASD 移动"></canvas>
+          <div id="win" hidden><div class="win-card"><span class="tag">货物归位</span><h2>通关成功！</h2><p id="result"></p><button id="next" class="primary"></button><button id="again">再玩一次</button></div></div>
+        </div>
+        <div class="legend"><span><i class="crate"></i>木箱</span><span><i class="goal"></i>目标点</span><span><i class="done"></i>已归位</span></div>
+      </section>
+    </div>
+    <aside>
+      <section class="panel"><h2>搬运记录</h2><div class="stats"><div><span>移动步数</span><strong id="steps">0</strong></div><div><span>箱子归位</span><strong><b id="placed">0</b><small id="total"> / 2</small></strong></div></div>
+        <p class="best">最佳步数 <b id="best">—</b></p>
+        <div class="actions"><button id="undo" disabled><span aria-hidden="true">↶</span> 撤销</button><button id="restart"><span aria-hidden="true">↻</span> 重开</button></div>
+      </section>
+      <section class="controls"><h2>移动控制</h2><p>用方向键、WASD 或下方按钮移动，把每个木箱推到目标点。</p>
+        <div class="pad"><button data-dir="up" aria-label="向上移动">↑</button><button data-dir="left" aria-label="向左移动">←</button><button data-dir="down" aria-label="向下移动">↓</button><button data-dir="right" aria-label="向右移动">→</button></div>
+      </section>
+    </aside>
+    <span id="announce" class="sr" role="status"></span>
+  </main>
+</body>
+</html>
